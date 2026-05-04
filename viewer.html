@@ -7,17 +7,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>3dcam AR</title>
     
-    <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
-    <!-- Model Viewer (Google AR) -->
-    <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:Arial,sans-serif;background:#000;overflow:hidden;height:100dvh;width:100dvw;position:fixed}
         
-        /* TELA 1: Início */
         #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:999;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:25px;color:#fff;text-align:center}
         .icon{font-size:60px;margin-bottom:10px}
         h2{font-size:1.3em;margin-bottom:5px;color:#a29bfe}
@@ -26,13 +22,11 @@
         .btn-start{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
         .btn-start:active{transform:scale(.95)}
         
-        /* TELA 2: Scanner */
         #scannerScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column}
         #scannerScreen.on{display:flex}
         #reader{width:100%!important;height:100%!important;flex:1}
         #reader video{width:100%!important;height:100%!important;object-fit:cover!important}
-        #reader img{display:none!important}
-        #reader__scan_region,#reader__dashboard_section,#reader__header_message,#html5-qrcode-button-camera-permission,#html5-qrcode-button-camera-start,#html5-qrcode-button-camera-stop{display:none!important}
+        #reader img,#reader__scan_region,#reader__dashboard_section,#reader__header_message,#html5-qrcode-button-camera-permission,#html5-qrcode-button-camera-start,#html5-qrcode-button-camera-stop{display:none!important}
         
         .scan-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(0,0,0,.8);padding:12px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.8em}
         .scan-dot{width:8px;height:8px;border-radius:50%;background:#f44;animation:pulse 1s infinite}
@@ -49,19 +43,18 @@
         .scan-line{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,#00cec9,transparent);animation:scanUpDown 2s linear infinite}
         @keyframes scanUpDown{0%{top:0}100%{top:100%}}
         
-        /* TELA 3: AR Viewer */
-        #arScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column}
+        /* TELA AR - Câmera ao vivo + Imagem 3D sobreposta */
+        #arScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000}
         #arScreen.on{display:flex}
+        #arVideo{position:fixed;top:0;left:0;width:100%!important;height:100%!important;object-fit:cover!important;z-index:1}
+        #arCanvas{position:fixed;top:0;left:0;width:100%!important;height:100%!important;z-index:2;pointer-events:none}
         
-        model-viewer{width:100%;height:100%;flex:1;--poster-color:transparent;background:#0a0a14}
-        
-        .ar-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(0,0,0,.8);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.8em}
+        .ar-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(0,0,0,.7);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.78em}
         .ar-dot{width:8px;height:8px;border-radius:50%;background:#0f8;animation:pulse .8s infinite}
         
-        .ar-ctrls{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+        .ar-ctrls{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:8px}
         .ctrl{width:44px;height:44px;border-radius:50%;background:rgba(108,92,231,.85);border:none;color:#fff;font-size:1.1em;cursor:pointer}
         .ctrl:active{transform:scale(.9)}
-        .ctrl-wide{width:auto;padding:0 16px;border-radius:22px;font-size:.8em;font-weight:600}
         
         .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,0,0,.9);color:#fff;padding:10px 20px;border-radius:20px;font-size:.8em;z-index:2000;transition:.3s;pointer-events:none;white-space:nowrap}
         .toast.show{transform:translateX(-50%) translateY(0)}
@@ -75,10 +68,9 @@
 <!-- TELA 1 -->
 <div id="startScreen">
     <div class="icon">📸</div>
-    <h2>3dcam AR 3D</h2>
-    <p>1. Toque em INICIAR<br>2. Aponte para o QR Code<br>3. Veja em 3D e AR!</p>
+    <h2>3dcam AR Viewer</h2>
+    <p>1. Toque em INICIAR<br>2. Aponte para o QR Code<br>3. Imagem aparece em 3D!</p>
     <button class="btn btn-start" onclick="startScanner()">📷 INICIAR SCANNER</button>
-    <p style="font-size:.7em;opacity:.4;margin-top:15px">Compatível com ARCore e ARKit</p>
 </div>
 
 <!-- TELA 2: SCANNER -->
@@ -86,7 +78,7 @@
     <div class="scan-bar">
         <span style="display:flex;align-items:center;gap:8px">
             <div class="scan-dot" id="scanDot"></div>
-            <span id="scanText">Aponte para o QR Code</span>
+            <span id="scanText">Aponte para o QR Code na tela do PC</span>
         </span>
         <button class="ctrl" onclick="stopScanner()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">✕</button>
     </div>
@@ -94,35 +86,26 @@
     <div class="scan-frame"><div class="sf-inner"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div><div class="scan-line"></div></div></div>
 </div>
 
-<!-- TELA 3: AR 3D -->
+<!-- TELA 3: AR - Câmera ao vivo + Imagem 3D -->
 <div id="arScreen">
+    <video id="arVideo" autoplay playsinline muted></video>
+    <canvas id="arCanvas"></canvas>
+    
     <div class="ar-bar">
         <span style="display:flex;align-items:center;gap:8px">
             <div class="ar-dot"></div>
-            <span>✨ 3D View - Toque "AR" para Realidade Aumentada</span>
+            <span>✨ Câmera + Imagem 3D</span>
         </span>
+        <span style="opacity:.5;font-size:.7em">Toque na imagem para mover</span>
     </div>
-    
-    <model-viewer id="mv" 
-        camera-controls 
-        touch-action="pan-y" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look"
-        ar-scale="auto"
-        exposure="1"
-        shadow-intensity="0.8"
-        environment-image="neutral"
-        auto-rotate
-        rotation-per-second="30deg"
-        style="width:100%;height:100%">
-    </model-viewer>
     
     <div class="flash" id="flash"></div>
     
     <div class="ar-ctrls">
-        <button class="ctrl" onclick="resetModel()">🔄</button>
-        <button class="ctrl" onclick="toggleAutoRotate()">⏯️</button>
-        <button class="ctrl ctrl-wide" onclick="enterAR()">📱 Ver em AR</button>
+        <button class="ctrl" onclick="rotateImage()">🔄</button>
+        <button class="ctrl" onclick="zoomIn()">🔍</button>
+        <button class="ctrl" onclick="zoomOut()">🔎</button>
+        <button class="ctrl" onclick="captureAR()">📸</button>
         <button class="ctrl" onclick="closeAR()">✕</button>
     </div>
 </div>
@@ -130,10 +113,10 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ==================== SCANNER ====================
 let scanner=null;
 let currentImage=null;
 
-// ==================== SCANNER ====================
 function startScanner(){
     document.getElementById('startScreen').style.display='none';
     document.getElementById('scannerScreen').classList.add('on');
@@ -143,12 +126,10 @@ function startScanner(){
         {facingMode:"environment"},
         {fps:10,qrbox:{width:200,height:200},aspectRatio:1.0},
         onScanSuccess,
-        ()=>{} 
+        ()=>{}
     ).then(()=>{
-        console.log('✅ Scanner iniciado');
-        document.getElementById('scanText').textContent='Aponte para o QR Code na tela do PC';
+        document.getElementById('scanText').textContent='Aponte para o QR Code';
     }).catch(err=>{
-        console.error('Erro:',err);
         alert('Erro ao abrir câmera!\nVerifique as permissões.');
         document.getElementById('startScreen').style.display='flex';
         document.getElementById('scannerScreen').classList.remove('on');
@@ -156,9 +137,8 @@ function startScanner(){
 }
 
 function onScanSuccess(decodedText){
-    console.log('✅ QR Lido!');
     document.getElementById('scanDot').classList.add('found');
-    document.getElementById('scanText').textContent='✅ QR Detectado!';
+    document.getElementById('scanText').textContent='✅ QR Lido! Iniciando AR...';
     if(navigator.vibrate)navigator.vibrate([50,30,50,30,100]);
     
     if(scanner){scanner.stop().catch(()=>{});scanner=null;}
@@ -167,8 +147,8 @@ function onScanSuccess(decodedText){
     
     setTimeout(()=>{
         document.getElementById('scannerScreen').classList.remove('on');
-        startARViewer();
-    },400);
+        startARCamera();
+    },500);
 }
 
 function stopScanner(){
@@ -177,151 +157,231 @@ function stopScanner(){
     document.getElementById('startScreen').style.display='flex';
 }
 
-// ==================== AR 3D VIEWER ====================
-function startARViewer(){
+// ==================== AR: CÂMERA AO VIVO + IMAGEM 3D ====================
+let arStream=null;
+let scene3D,camera3D,renderer3D,mesh3D,animationId;
+let imgScale=1;
+let imgRotation=0;
+
+async function startARCamera(){
     document.getElementById('arScreen').classList.add('on');
     document.getElementById('flash').classList.add('on');
     setTimeout(()=>document.getElementById('flash').classList.remove('on'),500);
     
-    const mv=document.getElementById('mv');
-    const imgSrc=currentImage||createDefaultImg();
+    const video=document.getElementById('arVideo');
     
-    // Model Viewer usa GLTF/GLB, então vamos criar um plano 3D com a imagem como textura
-    // Usando um GLB inline gerado via Three.js + GLTFExporter simplificado
-    // Ou usando uma abordagem mais simples: criar um cartão 3D
-    
-    // Como Model Viewer precisa de um modelo 3D, vamos criar um usando a API de conversão
-    create3DPlaneFromImage(imgSrc,mv);
-    
-    toast('✨ Modelo 3D carregado! Toque em "Ver em AR"');
-}
-
-async function create3DPlaneFromImage(imgSrc,mv){
-    // Criar um canvas com a imagem para usar como textura
-    const img=new Image();
-    img.crossOrigin='anonymous';
-    
-    img.onload=async function(){
-        // Criar um GLB simples com a textura usando Three.js
-        const scene=new THREE.Scene();
-        const aspect=img.width/img.height;
-        const geometry=new THREE.PlaneGeometry(aspect,1);
-        
-        // Criar canvas com textura
-        const canvas=document.createElement('canvas');
-        canvas.width=img.width;
-        canvas.height=img.height;
-        const ctx=canvas.getContext('2d');
-        ctx.drawImage(img,0,0);
-        
-        // Adicionar efeitos visuais na textura
-        ctx.strokeStyle='#6c5ce7';
-        ctx.lineWidth=img.width*0.01;
-        ctx.strokeRect(0,0,img.width,img.height);
-        
-        // Brilho nos cantos
-        const grd=ctx.createRadialGradient(0,0,0,0,0,img.width*0.1);
-        grd.addColorStop(0,'rgba(108,92,231,0.5)');
-        grd.addColorStop(1,'rgba(108,92,231,0)');
-        ctx.fillStyle=grd;
-        ctx.fillRect(0,0,img.width*0.1,img.height*0.1);
-        
-        const texture=new THREE.CanvasTexture(canvas);
-        const material=new THREE.MeshStandardMaterial({
-            map:texture,
-            side:THREE.DoubleSide,
-            roughness:0.3,
-            metalness:0.1
+    try{
+        // Abrir câmera traseira
+        arStream=await navigator.mediaDevices.getUserMedia({
+            video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},
+            audio:false
         });
+        video.srcObject=arStream;
+        await video.play();
         
-        const mesh=new THREE.Mesh(geometry,material);
-        scene.add(mesh);
+        console.log('✅ Câmera AR iniciada');
         
-        // Exportar como GLB
-        const exporter=new GLTFExporter();
-        exporter.parse(scene,function(glb){
-            const blob=new Blob([glb],{type:'model/gltf-binary'});
-            const url=URL.createObjectURL(blob);
-            mv.src=url;
-            console.log('✅ Modelo 3D criado!');
-        },{binary:true});
-    };
-    
-    img.onerror=function(){
-        // Fallback: usar um GLB de placeholder
-        mv.src='https://modelviewer.dev/shared-assets/models/Astronaut.glb';
-        console.log('⚠️ Usando modelo placeholder');
-    };
-    
-    img.src=imgSrc;
-}
-
-// Incluir Three.js e GLTFExporter
-const THREE_CDN='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-const GLTF_CDN='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js';
-
-function loadScript(src){
-    return new Promise((resolve,reject)=>{
-        const s=document.createElement('script');
-        s.src=src;s.onload=resolve;s.onerror=reject;
-        document.head.appendChild(s);
-    });
-}
-
-// Carregar Three.js e GLTFExporter dinamicamente
-Promise.all([loadScript(THREE_CDN),loadScript(GLTF_CDN)]).then(()=>{
-    console.log('✅ Three.js carregado');
-}).catch(err=>{
-    console.warn('⚠️ Three.js não carregou, usando fallback');
-});
-
-function enterAR(){
-    const mv=document.getElementById('mv');
-    if(mv&&mv.canActivateAR){
-        mv.activateAR().then(()=>{
-            console.log('✅ AR Ativado!');
-            toast('📱 AR Nativo Ativado!');
-        }).catch(err=>{
-            console.error('AR não disponível:',err);
-            toast('⚠️ AR não disponível neste dispositivo');
-        });
-    }else{
-        toast('⚠️ AR requer Android com ARCore ou iOS com ARKit');
+        // Iniciar Three.js com a imagem sobreposta
+        initThreeJS();
+        
+        toast('✨ AR Ativo! Câmera + Imagem 3D');
+    }catch(err){
+        console.error('Erro câmera:',err);
+        alert('Erro ao abrir câmera AR');
+        closeAR();
     }
 }
 
-function resetModel(){
-    const mv=document.getElementById('mv');
-    if(mv){mv.cameraOrbit='0deg 75deg 105%';mv.cameraTarget='0m 0m 0m';}
-    toast('🔄 View resetada');
+function initThreeJS(){
+    const canvas=document.getElementById('arCanvas');
+    const w=window.innerWidth;
+    const h=window.innerHeight;
+    
+    canvas.width=w;
+    canvas.height=h;
+    
+    // Scene
+    scene3D=new THREE.Scene();
+    camera3D=new THREE.PerspectiveCamera(60,w/h,0.1,100);
+    camera3D.position.z=4;
+    
+    renderer3D=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+    renderer3D.setSize(w,h);
+    renderer3D.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    
+    // Iluminação
+    const light=new THREE.AmbientLight(0xffffff,0.8);
+    scene3D.add(light);
+    const dLight=new THREE.DirectionalLight(0xffffff,0.6);
+    dLight.position.set(1,1,1);
+    scene3D.add(dLight);
+    
+    // Partículas
+    const pGeo=new THREE.BufferGeometry();
+    const pCount=200;
+    const pos=new Float32Array(pCount*3);
+    for(let i=0;i<pCount*3;i++)pos[i]=(Math.random()-0.5)*10;
+    pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const pMat=new THREE.PointsMaterial({size:0.03,color:0x6c5ce7,transparent:true,opacity:0.5});
+    const particles=new THREE.Points(pGeo,pMat);
+    particles.name='particles';
+    scene3D.add(particles);
+    
+    // Anel decorativo
+    const ringGeo=new THREE.TorusGeometry(1.5,0.03,16,100);
+    const ringMat=new THREE.MeshBasicMaterial({color:0x00cec9,transparent:true,opacity:0.4});
+    const ring=new THREE.Mesh(ringGeo,ringMat);
+    ring.name='ring';
+    scene3D.add(ring);
+    ring.rotation.x=Math.PI/2;
+    
+    // Carregar imagem
+    const loader=new THREE.TextureLoader();
+    const imgSrc=currentImage||createDefaultImg();
+    
+    loader.load(imgSrc,function(texture){
+        const aspect=texture.image.width/texture.image.height;
+        const geo=new THREE.PlaneGeometry(aspect*2,2);
+        const mat=new THREE.MeshStandardMaterial({
+            map:texture,
+            side:THREE.DoubleSide,
+            roughness:0.3,
+            metalness:0.1,
+        });
+        mesh3D=new THREE.Mesh(geo,mat);
+        scene3D.add(mesh3D);
+        
+        // Borda neon
+        const edgeGeo=new THREE.EdgesGeometry(geo);
+        const edgeMat=new THREE.LineBasicMaterial({color:0x6c5ce7});
+        const edge=new THREE.LineSegments(edgeGeo,edgeMat);
+        mesh3D.add(edge);
+        
+        console.log('✅ Imagem 3D carregada');
+    },undefined,function(){
+        console.warn('Usando fallback');
+        const geo=new THREE.PlaneGeometry(3,2);
+        const mat=new THREE.MeshBasicMaterial({color:0x6c5ce7});
+        mesh3D=new THREE.Mesh(geo,mat);
+        scene3D.add(mesh3D);
+    });
+    
+    // Touch para mover
+    let dragging=false,px=0,py=0;
+    canvas.style.pointerEvents='auto';
+    
+    canvas.addEventListener('touchstart',e=>{
+        dragging=true;
+        px=e.touches[0].clientX;
+        py=e.touches[0].clientY;
+    });
+    canvas.addEventListener('touchmove',e=>{
+        if(!dragging||!mesh3D)return;
+        const dx=e.touches[0].clientX-px;
+        const dy=e.touches[0].clientY-py;
+        mesh3D.position.x+=dx*0.005;
+        mesh3D.position.y-=dy*0.005;
+        px=e.touches[0].clientX;
+        py=e.touches[0].clientY;
+    });
+    canvas.addEventListener('touchend',()=>{dragging=false;});
+    
+    // Mouse
+    canvas.addEventListener('mousedown',e=>{dragging=true;px=e.clientX;py=e.clientY;});
+    canvas.addEventListener('mousemove',e=>{
+        if(!dragging||!mesh3D)return;
+        mesh3D.position.x+=(e.clientX-px)*0.005;
+        mesh3D.position.y-=(e.clientY-py)*0.005;
+        px=e.clientX;py=e.clientY;
+    });
+    canvas.addEventListener('mouseup',()=>{dragging=false;});
+    
+    animate3D();
 }
 
-function toggleAutoRotate(){
-    const mv=document.getElementById('mv');
-    if(mv){mv.autoRotate=!mv.autoRotate;}
-    toast(mv&&mv.autoRotate?'⏯️ Rotação ON':'⏯️ Rotação OFF');
+function animate3D(){
+    animationId=requestAnimationFrame(animate3D);
+    
+    if(mesh3D){
+        mesh3D.rotation.y+=0.003;
+        mesh3D.rotation.x=Math.sin(Date.now()*0.0005)*0.1;
+        mesh3D.position.y+=Math.sin(Date.now()*0.001)*0.002;
+        mesh3D.scale.setScalar(imgScale);
+    }
+    
+    const ring=scene3D.getObjectByName('ring');
+    if(ring){
+        ring.rotation.z+=0.01;
+        ring.scale.setScalar(1+Math.sin(Date.now()*0.002)*0.1);
+    }
+    
+    const particles=scene3D.getObjectByName('particles');
+    if(particles)particles.rotation.y+=0.001;
+    
+    renderer3D.render(scene3D,camera3D);
 }
 
+function rotateImage(){
+    imgRotation+=90;
+    if(mesh3D)mesh3D.rotation.z=THREE.MathUtils.degToRad(imgRotation);
+    toast('🔄 Girando');
+}
+function zoomIn(){
+    imgScale=Math.min(2,imgScale+0.2);
+    toast('🔍 Zoom +');
+}
+function zoomOut(){
+    imgScale=Math.max(0.3,imgScale-0.2);
+    toast('🔎 Zoom -');
+}
+function captureAR(){
+    const canvas=document.getElementById('arCanvas');
+    const video=document.getElementById('arVideo');
+    
+    // Combinar video + canvas 3D
+    const finalCanvas=document.createElement('canvas');
+    finalCanvas.width=window.innerWidth;
+    finalCanvas.height=window.innerHeight;
+    const ctx=finalCanvas.getContext('2d');
+    
+    ctx.drawImage(video,0,0,finalCanvas.width,finalCanvas.height);
+    ctx.drawImage(canvas,0,0);
+    
+    const a=document.createElement('a');
+    a.download='3dcam-ar-'+Date.now()+'.png';
+    a.href=finalCanvas.toDataURL('image/png');
+    a.click();
+    toast('📸 Foto AR salva!');
+}
 function closeAR(){
+    if(animationId)cancelAnimationFrame(animationId);
+    if(arStream){arStream.getTracks().forEach(t=>t.stop());arStream=null;}
+    if(renderer3D){renderer3D.dispose();renderer3D=null;}
+    scene3D=null;mesh3D=null;
     document.getElementById('arScreen').classList.remove('on');
     document.getElementById('startScreen').style.display='flex';
-    const mv=document.getElementById('mv');
-    if(mv)mv.src='';
+    imgScale=1;imgRotation=0;
 }
 
 function createDefaultImg(){
-    return'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#6c5ce7"/><stop offset="100%" style="stop-color:#00cec9"/></linearGradient></defs><rect width="800" height="600" fill="url(#g)"/><text x="400" y="300" text-anchor="middle" fill="white" font-size="40" font-weight="bold">3dcam AR</text></svg>');
+    return'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#6c5ce7"/><stop offset="100%" style="stop-color:#00cec9"/></linearGradient></defs><rect width="800" height="600" fill="url(#g)"/><text x="400" y="300" text-anchor="middle" fill="white" font-size="40" font-weight="bold">3dcam</text></svg>');
 }
-
 function toast(m){
     const t=document.getElementById('toast');
     t.textContent=m;t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),2000);
 }
 
-// Limpar ao sair
+window.addEventListener('resize',()=>{
+    if(!renderer3D)return;
+    const w=window.innerWidth,h=window.innerHeight;
+    camera3D.aspect=w/h;
+    camera3D.updateProjectionMatrix();
+    renderer3D.setSize(w,h);
+});
 window.addEventListener('beforeunload',()=>{
     if(scanner)scanner.stop().catch(()=>{});
+    if(arStream)arStream.getTracks().forEach(t=>t.stop());
 });
 </script>
 </body>
