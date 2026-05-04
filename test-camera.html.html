@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Teste Câmera - 3dcam</title>
+<style>body{font-family:Arial;text-align:center;padding:20px;background:#0a0a14;color:#fff}video{width:100%;max-width:350px;border-radius:12px;margin:15px 0;border:2px solid #6c5ce7}button{padding:14px 28px;background:#6c5ce7;color:#fff;border:none;border-radius:20px;font-size:1em;cursor:pointer;margin:8px}.ok{background:rgba(0,255,100,.2);padding:10px;border-radius:10px}.err{background:rgba(255,0,0,.2);padding:10px;border-radius:10px}</style></head>
+<body><h2>📸 Teste Câmera 3dcam</h2><video id="v" autoplay playsinline></video><div id="s"></div><button onclick="t()">🎥 Testar</button><button onclick="alert('Chrome > Configurações > Site > Câmera > Permitir')">⚙️ Ajuda</button>
+<script>async function t(){const v=document.getElementById('v'),s=document.getElementById('s');try{const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=st;s.innerHTML='<div class="ok">✅ Câmera OK!</div>'}catch(e){s.innerHTML=`<div class="err">❌ ${e.message}</div>`}}window.onload=t;</script>
+</body>
+</html>

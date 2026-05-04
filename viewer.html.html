@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>3dcam AR</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;background:#000;overflow:hidden;height:100dvh;width:100dvw;position:fixed}
+        #start{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:99999;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:25px;color:#fff;text-align:center}
+        .icon{font-size:60px;margin-bottom:10px}
+        h2{font-size:1.2em;margin-bottom:5px;color:#a29bfe}
+        p{opacity:.7;margin-bottom:18px;font-size:.85em}
+        .btn{display:block;width:100%;max-width:280px;padding:15px;border:none;border-radius:14px;font-size:1.1em;font-weight:600;cursor:pointer;margin:8px auto}
+        .btn-go{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff}
+        .btn-go:active{transform:scale(.95)}
+        #ar{display:none;position:fixed;top:0;left:0;width:100%;height:100%}
+        #ar.on{display:block}
+        .top{position:fixed;top:0;left:0;right:0;z-index:10000;background:rgba(0,0,0,.8);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.78em}
+        .st{display:flex;align-items:center;gap:6px}
+        .dot{width:7px;height:7px;border-radius:50%;background:#f44}
+        .dot.on{background:#0f8;animation:pulse .8s infinite}
+        @keyframes pulse{50%{transform:scale(1.5);opacity:.5}}
+        .scan{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5000;pointer-events:none;display:none}
+        .scan.show{display:block}
+        .sf{width:220px;height:220px;position:relative}
+        .cr{position:absolute;width:25px;height:25px;border-color:#00cec9;border-style:solid}
+        .cr.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0;animation:cp 2s infinite}
+        .cr.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0;animation:cp 2s infinite .5s}
+        .cr.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px;animation:cp 2s infinite 1s}
+        .cr.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0;animation:cp 2s infinite 1.5s}
+        @keyframes cp{50%{border-color:rgba(0,206,201,.3)}}
+        .sl{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,#00cec9,transparent);animation:sm 2s linear infinite}
+        @keyframes sm{0%{top:0}100%{top:100%}}
+        .prog{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:5000;display:none;text-align:center;width:85%;max-width:300px}
+        .prog.show{display:block}
+        .pl{color:#fff;font-size:.7em;margin-bottom:5px;display:flex;justify-content:space-between}
+        .pl span{color:#00cec9}
+        .pb{background:rgba(255,255,255,.15);border-radius:6px;height:6px;overflow:hidden}
+        .pf{height:100%;background:linear-gradient(90deg,#6c5ce7,#00cec9);border-radius:6px;width:0%;transition:width .4s}
+        .pd{color:#aaa;font-size:.65em;margin-top:4px}
+        .ctrls{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;gap:8px}
+        .ctrl{width:40px;height:40px;border-radius:50%;background:rgba(108,92,231,.85);border:none;color:#fff;font-size:1.1em;cursor:pointer}
+        .ctrl:active{transform:scale(.9);background:#00cec9}
+        .toast{position:fixed;bottom:130px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,0,0,.9);color:#fff;padding:8px 16px;border-radius:20px;font-size:.7em;z-index:20000;transition:.3s;pointer-events:none;white-space:nowrap}
+        .toast.show{transform:translateX(-50%) translateY(0)}
+        .flash{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,206,201,.15);z-index:4000;pointer-events:none;display:none}
+        .flash.on{display:block;animation:flash .6s ease forwards}
+        @keyframes flash{0%{opacity:1}100%{opacity:0}}
+        a-scene{position:fixed!important;top:0!important;left:0!important;width:100%!important;height:100%!important;z-index:1!important}
+    </style>
+</head>
+<body>
+<div id="start">
+    <div class="icon">📸</div>
+    <h2>3dcam AR Viewer</h2>
+    <p>Aponte a câmera para a foto<br>no monitor do computador</p>
+    <button class="btn btn-go" onclick="go()">📷 INICIAR AR</button>
+    <p style="font-size:.65em;opacity:.4;margin-top:12px">A câmera será solicitada</p>
+</div>
+
+<div id="ar">
+    <div class="top">
+        <div class="st"><div class="dot" id="dot"></div><span id="st">Iniciando...</span></div>
+        <span style="opacity:.5;font-size:.7em" id="mb"></span>
+    </div>
+    <div class="scan" id="scan"><div class="sf"><div class="cr tl"></div><div class="cr tr"></div><div class="cr bl"></div><div class="cr br"></div><div class="sl"></div></div></div>
+    <div class="prog" id="prog">
+        <div class="pl"><span>🔍 Detectando</span><span id="pp">0%</span></div>
+        <div class="pb"><div class="pf" id="pf"></div></div>
+        <div class="pd" id="pd">Analisando...</div>
+    </div>
+    <div class="flash" id="flash"></div>
+    <div class="ctrls">
+        <button class="ctrl" onclick="reset()">🔄</button>
+        <button class="ctrl" onclick="tfx()">✨</button>
+        <button class="ctrl" onclick="cap()">📸</button>
+    </div>
+    <a-scene id="sc" embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best;" renderer="antialias: true; alpha: true; precision: mediump;" vr-mode-ui="enabled: false" loading-screen="enabled: false">
+        <a-entity id="ac" visible="false">
+            <a-image id="mi" src="" position="0 0 0" rotation="-90 0 0" width="1.6" height="1.2"></a-image>
+            <a-entity position="0 0 -0.02" rotation="-90 0 0"><a-ring color="#6c5ce7" radius-inner="0.78" radius-outer="0.82" animation="property: rotation; to: 0 0 360; loop: true; dur: 12000; easing: linear;"></a-ring></a-entity>
+            <a-entity position="0 0.6 0" particle-system="preset: snow; particleCount: 40; color: #6c5ce7,#00cec9;" id="fx"></a-entity>
+            <a-text value="✅ Detectado" position="0 0.7 0" rotation="-90 0 0" align="center" color="#00cec9" scale="0.5 0.5 0.5"></a-text>
+        </a-entity>
+        <a-entity camera look-controls="enabled: false"></a-entity>
+        <a-light type="ambient" color="#fff" intensity="0.7"></a-light>
+    </a-scene>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let af=false;let fx=true;let dr=false;
+
+function go(){
+    document.getElementById('start').style.display='none';
+    document.getElementById('ar').classList.add('on');
+    us('Iniciando câmera...',false);
+    const m=localStorage.getItem('stealthMethod')||'frequency';
+    document.getElementById('mb').textContent=m.toUpperCase();
+    const img=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
+    document.getElementById('mi').setAttribute('src',img||di());
+    document.getElementById('sc').addEventListener('loaded',()=>{
+        us('Câmera ativa',false);document.getElementById('dot').classList.add('on');
+        setTimeout(()=>{document.getElementById('scan').classList.add('show');sd();},1000);
+    });
+}
+
+function sd(){if(dr)return;dr=true;document.getElementById('prog').classList.add('show');
+const st=[[15,'Analisando pixels...'],[30,'Procurando frequências...'],[50,'Detectando ondas...'],[70,'Verificando marcadores...'],[85,'Confirmando assinatura...'],[100,'✅ Padrão encontrado!']];
+let s=0;const iv=setInterval(()=>{if(s<st.length){up(st[s][0],st[s][1]);s++;}else{clearInterval(iv);up(100,'✅ Detectado!');setTimeout(()=>{document.getElementById('scan').classList.remove('show');document.getElementById('prog').classList.remove('show');document.getElementById('flash').classList.add('on');setTimeout(()=>document.getElementById('flash').classList.remove('on'),500);aa();dr=false;},700);}},600);
+document.addEventListener('touchstart',function sk(e){if(e.target.tagName!=='BUTTON'&&!af){clearInterval(iv);up(100,'✅ Detectado!');setTimeout(()=>{document.getElementById('scan').classList.remove('show');document.getElementById('prog').classList.remove('show');aa();dr=false;},300);document.removeEventListener('touchstart',sk);}});}
+
+function up(p,t){document.getElementById('pf').style.width=p+'%';document.getElementById('pp').textContent=p+'%';document.getElementById('pd').textContent=t;}
+function aa(){document.getElementById('ac').setAttribute('visible',true);af=true;us('✅ AR Ativo!',true);toast('✨ Padrão detectado!');if(navigator.vibrate)navigator.vibrate([50,30,50,30,100]);}
+function di(){return'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#6c5ce7"/><text x="400" y="300" text-anchor="middle" fill="white" font-size="38">3dcam</text></svg>');}
+function us(t,on){document.getElementById('st').textContent=t;document.getElementById('dot').classList.toggle('on',on);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function reset(){document.getElementById('ac').setAttribute('visible',false);af=false;dr=false;document.getElementById('pf').style.width='0%';document.getElementById('pp').textContent='0%';us('Procurando...',false);toast('🔄 Reset');document.getElementById('scan').classList.add('show');document.getElementById('prog').classList.add('show');setTimeout(sd,500);}
+function tfx(){fx=!fx;document.getElementById('fx').setAttribute('visible',fx);toast(fx?'✨ On':'✨ Off');}
+function cap(){const c=document.querySelector('canvas');if(c){const a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=c.toDataURL('image/png');a.click();toast('📸 Foto!');}}
+document.addEventListener('gesturestart',e=>e.preventDefault());
+</script>
+</body>
+</html>
