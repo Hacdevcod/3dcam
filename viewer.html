@@ -52,16 +52,16 @@
 <body>
 
 <div id="startScreen">
-    <div style="font-size:60px;margin-bottom:10px">📸</div>
+    <div style="font-size:60px;margin-bottom:10px">ð¸</div>
     <h2>3dcam AR 3D</h2>
     <p>1. Clique INICIAR<br>2. Aponte para o QR Code<br>3. Foto aparece em 3D!</p>
-    <button class="btn btn-go" onclick="startScan()">📷 INICIAR</button>
+    <button class="btn btn-go" onclick="startScan()">ð· INICIAR</button>
 </div>
 
 <div id="scanScreen">
     <div class="scan-bar">
         <span style="display:flex;align-items:center;gap:8px"><div class="scan-dot" id="sd"></div><span id="st">Aponte para o QR Code</span></span>
-        <button class="ctrl" onclick="stopScan()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">✕</button>
+        <button class="ctrl" onclick="stopScan()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">â</button>
     </div>
     <div id="reader"></div>
     <div class="scan-frame"><div class="sf-inner"><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div><div class="scan-line"></div></div></div>
@@ -70,18 +70,18 @@
 <div id="ar3D">
     <div class="loading show" id="loading3d"><div class="spinner"></div><p id="loadingText">Procurando imagem...</p></div>
     <canvas id="arCanvas"></canvas>
-    <div class="ar-bar"><span style="display:flex;align-items:center;gap:8px"><div class="ar-dot"></div><span>✨ 3D - Arraste para girar</span></span></div>
+    <div class="ar-bar"><span style="display:flex;align-items:center;gap:8px"><div class="ar-dot"></div><span>â¨ 3D - Arraste para girar</span></span></div>
     <div class="ar-ctrls">
-        <button class="ctrl" onclick="reset3D()">🔄</button>
-        <button class="ctrl" onclick="toggleRotate()">⏯️</button>
-        <button class="ctrl" onclick="capture3D()">📸</button>
-        <button class="ctrl" onclick="close3D()">✕</button>
+        <button class="ctrl" onclick="reset3D()">ð</button>
+        <button class="ctrl" onclick="toggleRotate()">â¯ï¸</button>
+        <button class="ctrl" onclick="capture3D()">ð¸</button>
+        <button class="ctrl" onclick="close3D()">â</button>
     </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// CONFIGURAÇÃO
+// CONFIGURAÃÃO
 var GITHUB_USER='Hacdevcod';
 var GITHUB_REPO='3dcam';
 var VIEWER_URL='https://'+GITHUB_USER+'.github.io/'+GITHUB_REPO+'/viewer.html';
@@ -99,7 +99,7 @@ function startScan(){
     scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:200,height:200},aspectRatio:1.0},
         function(text){
             document.getElementById('sd').classList.add('found');
-            document.getElementById('st').textContent='✅ QR Lido!';
+            document.getElementById('st').textContent='â QR Lido!';
             if(navigator.vibrate)navigator.vibrate([50,30,50,100]);
             if(scanner){scanner.stop().catch(function(){});scanner=null;}
             setTimeout(function(){
@@ -108,7 +108,7 @@ function startScan(){
             },400);
         },function(){}
     ).catch(function(err){
-        alert('Erro: Câmera bloqueada!\nVá em: Chrome > Configurações > Site > Câmera > Permitir');
+        alert('Erro: CÃ¢mera bloqueada!\nVÃ¡ em: Chrome > ConfiguraÃ§Ãµes > Site > CÃ¢mera > Permitir');
         document.getElementById('startScreen').style.display='flex';
         document.getElementById('scanScreen').classList.remove('on');
     });
@@ -128,7 +128,7 @@ function findAndShowImage(){
     // 1. Tentar localStorage (imagem do PC)
     var localImg=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
     if(localImg&&localImg.length>1000&&localImg.startsWith('data:image')){
-        console.log('✅ Imagem do localStorage');
+        console.log('â Imagem do localStorage');
         loadTextureAndStart(localImg);
         return;
     }
@@ -146,7 +146,7 @@ function findAndShowImage(){
     .then(function(r){return r.json();})
     .then(function(files){
         if(Array.isArray(files)&&files.length>0){
-            // Pegar a última imagem
+            // Pegar a Ãºltima imagem
             var lastFile=files[files.length-1];
             var rawUrl='https://raw.githubusercontent.com/'+GITHUB_USER+'/'+GITHUB_REPO+'/main/images/'+lastFile.name;
             console.log('Imagem encontrada:',rawUrl);
@@ -167,11 +167,11 @@ function testImageUrl(url){
     var testImg=new Image();
     testImg.crossOrigin='anonymous';
     testImg.onload=function(){
-        console.log('✅ Imagem carregada!');
+        console.log('â Imagem carregada!');
         loadTextureAndStart(url);
     };
     testImg.onerror=function(){
-        console.log('❌ URL falhou, tentando fallback...');
+        console.log('â URL falhou, tentando fallback...');
         useFallback();
     };
     testImg.src=url;
@@ -206,14 +206,14 @@ function loadTextureAndStart(imgSrc){
     var f=new THREE.DirectionalLight(0x6c5ce7,0.4);f.position.set(-5,0,3);scene.add(f);
     var r=new THREE.DirectionalLight(0x00cec9,0.6);r.position.set(0,-2,-3);scene.add(r);
     
-    // Partículas
+    // PartÃ­culas
     var pGeo=new THREE.BufferGeometry();
     var pCount=500,pos=new Float32Array(pCount*3);
     for(var i=0;i<pCount*3;i++)pos[i]=(Math.random()-0.5)*12;
     pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
     scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({size:0.03,color:0x6c5ce7,transparent:true,opacity:0.6,blending:THREE.AdditiveBlending})));
     
-    // Anéis
+    // AnÃ©is
     for(var ri=0;ri<3;ri++){
         var ring=new THREE.Mesh(new THREE.TorusGeometry(1.5+ri*0.3,0.02,16,100),new THREE.MeshBasicMaterial({color:ri===0?0x6c5ce7:ri===1?0x00cec9:0xa29bfe,transparent:true,opacity:0.3}));
         ring.name='ring'+ri;ring.rotation.x=Math.PI/2+ri*0.3;scene.add(ring);
@@ -226,7 +226,7 @@ function loadTextureAndStart(imgSrc){
     loader.crossOrigin='anonymous';
     
     loader.load(finalSrc,function(texture){
-        console.log('✅ Textura OK!',texture.image.width,texture.image.height);
+        console.log('â Textura OK!',texture.image.width,texture.image.height);
         var aspect=texture.image.width/texture.image.height;
         var geo=new THREE.PlaneGeometry(aspect*2.5,2.5);
         var mat=new THREE.MeshPhysicalMaterial({map:texture,side:THREE.DoubleSide,roughness:0.2,metalness:0.05});
@@ -242,7 +242,7 @@ function loadTextureAndStart(imgSrc){
         mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x00cec9})));
         
         document.getElementById('loading3d').classList.remove('show');
-        toast('✨ Foto em 3D!');
+        toast('â¨ Foto em 3D!');
     },undefined,function(err){
         console.error('Erro textura:',err);
         // Fallback direto
@@ -252,7 +252,7 @@ function loadTextureAndStart(imgSrc){
         mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:tex,side:THREE.DoubleSide}));
         scene.add(mesh);
         document.getElementById('loading3d').classList.remove('show');
-        toast('⚠️ Usando imagem de teste');
+        toast('â ï¸ Usando imagem de teste');
     });
     
     setupTouch(canvas);
@@ -300,9 +300,9 @@ function animate3D(){
     if(renderer&&scene&&camera)renderer.render(scene,camera);
 }
 
-function reset3D(){if(mesh)mesh.rotation.set(0,0,0);camera.position.z=5;toast('🔄 Reset');}
-function toggleRotate(){autoRotate=!autoRotate;toast(autoRotate?'⏯️ ON':'⏯️ OFF');}
-function capture3D(){if(!renderer)return;renderer.render(scene,camera);var a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('📸 Foto!');}
+function reset3D(){if(mesh)mesh.rotation.set(0,0,0);camera.position.z=5;toast('ð Reset');}
+function toggleRotate(){autoRotate=!autoRotate;toast(autoRotate?'â¯ï¸ ON':'â¯ï¸ OFF');}
+function capture3D(){if(!renderer)return;renderer.render(scene,camera);var a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('ð¸ Foto!');}
 function close3D(){if(animId)cancelAnimationFrame(animId);if(renderer)renderer.dispose();scene=null;mesh=null;renderer=null;document.getElementById('ar3D').classList.remove('on');document.getElementById('startScreen').style.display='flex';autoRotate=true;}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
 window.addEventListener('resize',function(){if(!renderer||!camera)return;var w=window.innerWidth,h=window.innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);});
