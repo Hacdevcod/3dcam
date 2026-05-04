@@ -6,103 +6,210 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>3dcam AR</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:Arial,sans-serif;background:#000;overflow:hidden;height:100dvh;width:100dvw;position:fixed}
-        #start{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:999;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:25px;color:#fff;text-align:center}
+        
+        /* Tela inicial */
+        #startScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a14;z-index:999;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:25px;color:#fff;text-align:center}
         .icon{font-size:60px;margin-bottom:10px}
         h2{font-size:1.3em;margin-bottom:5px;color:#a29bfe}
-        p{opacity:.7;margin-bottom:18px;font-size:.9em}
-        .btn{display:block;width:100%;max-width:280px;padding:16px;border:none;border-radius:16px;font-size:1.2em;font-weight:600;cursor:pointer;margin:8px auto;color:#fff}
-        .btn-go{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
-        .btn-go:active{transform:scale(.95)}
-        #ar{display:none;position:fixed;top:0;left:0;width:100%;height:100%}
-        #ar.on{display:block}
-        .bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,.8);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.8em}
-        .st{display:flex;align-items:center;gap:6px}
-        .dot{width:8px;height:8px;border-radius:50%;background:#f44}
-        .dot.on{background:#0f8;animation:pulse .8s infinite}
-        @keyframes pulse{50%{transform:scale(1.5)}}
-        .ctrl{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:10px}
-        .cb{width:44px;height:44px;border-radius:50%;background:rgba(108,92,231,.85);border:none;color:#fff;font-size:1.2em;cursor:pointer}
-        .cb:active{transform:scale(.9)}
-        .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,0,0,.9);color:#fff;padding:8px 18px;border-radius:20px;font-size:.75em;z-index:200;transition:.3s;pointer-events:none}
+        p{opacity:.7;margin-bottom:18px;font-size:.9em;line-height:1.4}
+        .btn{display:block;width:100%;max-width:280px;padding:16px;border:none;border-radius:16px;font-size:1.1em;font-weight:600;cursor:pointer;margin:8px auto;color:#fff}
+        .btn-start{background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
+        .btn-start:active{transform:scale(.95)}
+        
+        /* Tela do scanner */
+        #scannerScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column}
+        #scannerScreen.on{display:flex}
+        
+        #reader{width:100%!important;height:100%!important;flex:1}
+        #reader video{width:100%!important;height:100%!important;object-fit:cover!important}
+        
+        /* Esconde elementos desnecessários do scanner */
+        #reader__scan_region{display:none!important}
+        #reader__dashboard_section{display:none!important}
+        #html5-qrcode-button-camera-permission{display:none!important}
+        #html5-qrcode-button-camera-start{display:none!important}
+        #html5-qrcode-button-camera-stop{display:none!important}
+        
+        /* Barra de status */
+        .scan-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(0,0,0,.8);padding:12px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.8em}
+        .scan-status{display:flex;align-items:center;gap:8px}
+        .scan-dot{width:8px;height:8px;border-radius:50%;background:#f44;animation:pulse 1s infinite}
+        .scan-dot.found{background:#0f8;animation:none}
+        @keyframes pulse{50%{transform:scale(1.8);opacity:.4}}
+        
+        .scan-frame{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;pointer-events:none}
+        .sf-inner{width:200px;height:200px;position:relative}
+        .corner{position:absolute;width:25px;height:25px;border-color:#00cec9;border-style:solid}
+        .corner.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:6px 0 0 0}
+        .corner.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 6px 0 0}
+        .corner.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 6px}
+        .corner.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 6px 0}
+        .scan-line{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,#00cec9,transparent);animation:scanUpDown 2s linear infinite}
+        @keyframes scanUpDown{0%{top:0}100%{top:100%}}
+        
+        /* Tela AR */
+        #arScreen{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column;align-items:center;justify-content:center}
+        #arScreen.on{display:flex}
+        #arScreen img{max-width:90%;max-height:70%;border-radius:15px;border:3px solid #6c5ce7;box-shadow:0 0 30px rgba(108,92,231,.5);animation:arPulse 2s infinite}
+        @keyframes arPulse{50%{box-shadow:0 0 50px rgba(0,206,201,.7)}}
+        
+        .ar-label{color:#00cec9;font-size:1.1em;margin-top:15px;animation:blink 1s infinite}
+        @keyframes blink{50%{opacity:.3}}
+        
+        .ctrl-btns{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;gap:10px}
+        .ctrl-btn{width:44px;height:44px;border-radius:50%;background:rgba(108,92,231,.85);border:none;color:#fff;font-size:1.2em;cursor:pointer}
+        .ctrl-btn:active{transform:scale(.9)}
+        
+        .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,0,0,.9);color:#fff;padding:10px 20px;border-radius:20px;font-size:.8em;z-index:2000;transition:.3s;pointer-events:none;white-space:nowrap}
         .toast.show{transform:translateX(-50%) translateY(0)}
-        a-scene{position:fixed!important;top:0!important;left:0!important;width:100%!important;height:100%!important;z-index:1!important}
     </style>
 </head>
 <body>
-<div id="start">
+
+<!-- TELA 1: Início -->
+<div id="startScreen">
     <div class="icon">📸</div>
     <h2>3dcam AR Viewer</h2>
-    <p>Aponte a câmera para a foto<br>com o QR Code no canto</p>
-    <button class="btn btn-go" onclick="go()">📷 INICIAR AR</button>
+    <p>1. Clique em INICIAR<br>2. Permita a câmera<br>3. Aponte para o QR Code<br>na tela do computador</p>
+    <button class="btn btn-start" onclick="startScanner()">📷 INICIAR SCANNER</button>
 </div>
 
-<div id="ar">
-    <div class="bar">
-        <div class="st"><div class="dot" id="dot"></div><span id="st">Câmera ativa</span></div>
-        <span style="opacity:.5;font-size:.7em">Aponte para a foto</span>
+<!-- TELA 2: Scanner QR -->
+<div id="scannerScreen">
+    <div class="scan-bar">
+        <div class="scan-status">
+            <div class="scan-dot" id="scanDot"></div>
+            <span id="scanText">Procurando QR Code...</span>
+        </div>
+        <button class="ctrl-btn" onclick="stopScanner()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">✕ Fechar</button>
     </div>
-    <div class="ctrl">
-        <button class="cb" onclick="reset()">🔄</button>
-        <button class="cb" onclick="cap()">📸</button>
+    <div id="reader"></div>
+    <div class="scan-frame">
+        <div class="sf-inner">
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
+            <div class="scan-line"></div>
+        </div>
     </div>
-    <a-scene id="sc" embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best;" renderer="antialias: true; alpha: true; precision: mediump;" vr-mode-ui="enabled: false" loading-screen="enabled: false">
-        <a-entity id="ac" visible="false">
-            <a-image id="mi" src="" position="0 0 0" rotation="-90 0 0" width="1.6" height="1.2"></a-image>
-            <a-entity position="0 0 -0.02" rotation="-90 0 0">
-                <a-ring color="#6c5ce7" radius-inner="0.78" radius-outer="0.82" animation="property: rotation; to: 0 0 360; loop: true; dur: 12000; easing: linear;"></a-ring>
-            </a-entity>
-            <a-entity position="0 0.6 0" particle-system="preset: snow; particleCount: 50; color: #6c5ce7,#00cec9;" id="fx"></a-entity>
-        </a-entity>
-        <a-entity camera look-controls="enabled: false"></a-entity>
-        <a-light type="ambient" color="#fff" intensity="0.7"></a-light>
-    </a-scene>
 </div>
+
+<!-- TELA 3: AR Mode -->
+<div id="arScreen">
+    <img id="arImage" src="" alt="AR View">
+    <p class="ar-label">✨ Realidade Aumentada Ativada ✨</p>
+    <div class="ctrl-btns">
+        <button class="ctrl-btn" onclick="closeAR()">✕</button>
+        <button class="ctrl-btn" onclick="captureAR()">📸</button>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-let arOn=false;
+let scanner=null;
+let currentImage=null;
 
-function go(){
-    document.getElementById('start').style.display='none';
-    document.getElementById('ar').classList.add('on');
+function startScanner(){
+    document.getElementById('startScreen').style.display='none';
+    document.getElementById('scannerScreen').classList.add('on');
     
-    const img=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
-    document.getElementById('mi').setAttribute('src',img||df());
+    // Criar scanner
+    scanner=new Html5Qrcode("reader");
     
-    document.getElementById('sc').addEventListener('loaded',()=>{
-        document.getElementById('dot').classList.add('on');
-        document.getElementById('st').textContent='Câmera OK - Aponte';
-        // Ativar AR automaticamente após 2s
-        setTimeout(()=>{
-            document.getElementById('ac').setAttribute('visible',true);
-            arOn=true;
-            document.getElementById('st').textContent='✅ AR Ativo!';
-            toast('✨ AR ativado!');
-        },2000);
-    });
+    const config={
+        fps:10,
+        qrbox:{width:200,height:200},
+        aspectRatio:1.0,
+        facingMode:"environment"
+    };
     
-    // Também ativa com toque
-    document.addEventListener('touchstart',function ta(e){
-        if(e.target.tagName!=='BUTTON'&&!arOn){
-            document.getElementById('ac').setAttribute('visible',true);
-            arOn=true;
-            document.getElementById('st').textContent='✅ AR Ativo!';
-            toast('✨ AR ativado!');
-            document.removeEventListener('touchstart',ta);
-        }
+    scanner.start(
+        {facingMode:"environment"},
+        config,
+        onScanSuccess,
+        onScanError
+    ).then(()=>{
+        console.log('✅ Scanner iniciado');
+        document.getElementById('scanText').textContent='Aponte para o QR Code';
+    }).catch(err=>{
+        console.error('Erro scanner:',err);
+        alert('Erro ao abrir câmera!\n\nVerifique as permissões do Chrome.\n\nVá em: Configurações > Site > Câmera > Permitir');
+        document.getElementById('startScreen').style.display='flex';
+        document.getElementById('scannerScreen').classList.remove('on');
     });
 }
 
-function df(){return'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#6c5ce7"/><text x="400" y="300" text-anchor="middle" fill="white" font-size="38">3dcam</text></svg>');}
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
-function reset(){document.getElementById('ac').setAttribute('visible',false);arOn=false;document.getElementById('st').textContent='Reset - Aponte';toast('🔄 Reset');setTimeout(()=>{document.getElementById('ac').setAttribute('visible',true);arOn=true;document.getElementById('st').textContent='✅ AR Ativo!';},1500);}
-function cap(){const c=document.querySelector('canvas');if(c){const a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=c.toDataURL('image/png');a.click();toast('📸 Foto!');}}
-document.addEventListener('gesturestart',e=>e.preventDefault());
+function onScanSuccess(decodedText){
+    console.log('✅ QR Detectado:',decodedText);
+    
+    // Feedback
+    document.getElementById('scanDot').classList.add('found');
+    document.getElementById('scanText').textContent='✅ QR Code detectado!';
+    
+    if(navigator.vibrate)navigator.vibrate([50,30,50,30,100]);
+    
+    // Parar scanner
+    if(scanner)scanner.stop().then(()=>{
+        console.log('Scanner parado');
+    }).catch(()=>{});
+    
+    // Pegar imagem do localStorage
+    currentImage=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
+    
+    // Mostrar AR
+    setTimeout(()=>{
+        document.getElementById('scannerScreen').classList.remove('on');
+        document.getElementById('arImage').src=currentImage||createDefaultImg();
+        document.getElementById('arScreen').classList.add('on');
+        toast('✨ QR Code lido! AR Ativado!');
+    },500);
+}
+
+function onScanError(err){
+    // Erros normais durante scanning - ignorar
+}
+
+function stopScanner(){
+    if(scanner){
+        scanner.stop().then(()=>{
+            console.log('Scanner parado');
+        }).catch(()=>{});
+    }
+    document.getElementById('scannerScreen').classList.remove('on');
+    document.getElementById('startScreen').style.display='flex';
+}
+
+function closeAR(){
+    document.getElementById('arScreen').classList.remove('on');
+    document.getElementById('startScreen').style.display='flex';
+}
+
+function captureAR(){
+    const img=document.getElementById('arImage');
+    if(!img.src)return;
+    const a=document.createElement('a');
+    a.download='3dcam-ar-'+Date.now()+'.png';
+    a.href=img.src;
+    a.click();
+    toast('📸 Imagem AR salva!');
+}
+
+function createDefaultImg(){
+    return'data:image/svg+xml;base64,'+btoa('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#6c5ce7"/><text x="400" y="300" text-anchor="middle" fill="white" font-size="38">3dcam AR</text></svg>');
+}
+
+function toast(m){
+    const t=document.getElementById('toast');
+    t.textContent=m;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2000);
+}
 </script>
 </body>
 </html>
