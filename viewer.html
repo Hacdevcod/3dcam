@@ -35,25 +35,25 @@
 <body>
 
 <div id="start">
-    <div style="font-size:60px;margin-bottom:10px">📸</div>
+    <div style="font-size:60px;margin-bottom:10px">ð¸</div>
     <h2>3dcam AR</h2>
     <p>1. Clique INICIAR<br>2. Aponte para o QR Code<br>3. Veja a imagem!</p>
-    <button class="btn btn-go" onclick="startScan()">📷 INICIAR</button>
+    <button class="btn btn-go" onclick="startScan()">ð· INICIAR</button>
 </div>
 
 <div id="scanScreen">
     <div class="bar">
         <span style="display:flex;align-items:center;gap:8px"><div class="dot" id="sd"></div><span id="st">Aponte para o QR Code</span></span>
-        <button class="ctrl" onclick="stopScan()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">✕</button>
+        <button class="ctrl" onclick="stopScan()" style="position:static;width:auto;height:auto;border-radius:20px;padding:6px 14px;font-size:.75em">â</button>
     </div>
     <div id="reader"></div>
 </div>
 
 <div id="arScreen">
     <img id="arImg" src="" alt="AR">
-    <p class="ar-label">✨ Imagem Detectada ✨</p>
+    <p class="ar-label">â¨ Imagem Detectada â¨</p>
     <div class="ctrls">
-        <button class="ctrl" onclick="closeAR()">✕</button>
+        <button class="ctrl" onclick="closeAR()">â</button>
     </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -77,7 +77,7 @@ function startScan(){
         function(text){
             console.log('QR Lido:',text);
             document.getElementById('sd').classList.add('ok');
-            document.getElementById('st').textContent='✅ QR Lido!';
+            document.getElementById('st').textContent='â QR Lido!';
             if(navigator.vibrate)navigator.vibrate([50,30,50,100]);
             if(scanner){scanner.stop().catch(function(){});scanner=null;}
             setTimeout(function(){
@@ -87,7 +87,7 @@ function startScan(){
         },
         function(){}
     ).catch(function(err){
-        alert('Erro: Câmera bloqueada!\n\nVá em: Chrome > Configurações > Site > Câmera > Permitir');
+        alert('Erro: CÃ¢mera bloqueada!\n\nVÃ¡ em: Chrome > ConfiguraÃ§Ãµes > Site > CÃ¢mera > Permitir');
         document.getElementById('start').style.display='flex';
         document.getElementById('scanScreen').classList.remove('on');
     });
@@ -97,7 +97,7 @@ function showImage(){
     // Tentar localStorage primeiro
     var img=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
     
-    // Se não tiver, usar imagem de teste do GitHub
+    // Se nÃ£o tiver, usar imagem de teste do GitHub
     if(!img||img.length<100){
         img=GITHUB_IMAGES[0]||createTestImage();
     }
@@ -105,7 +105,7 @@ function showImage(){
     console.log('Mostrando imagem...');
     document.getElementById('arImg').src=img;
     document.getElementById('arScreen').classList.add('on');
-    toast('✨ Imagem carregada!');
+    toast('â¨ Imagem carregada!');
 }
 
 function createTestImage(){
