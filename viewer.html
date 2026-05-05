@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>3dcam AR 3D</title>
+    <title>3dcam AR 3D Realista</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
@@ -17,7 +16,7 @@
         .btn-ar{background:linear-gradient(135deg,#00c853,#00e676);font-size:1.2em}
         #scan{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000}
         #scan.on{display:flex;flex-direction:column}
-        #reader{flex:1;width:100%!important;height:100%!important}
+        #reader{flex:1;width:100%!important}
         #reader video{width:100%!important;height:100%!important;object-fit:cover!important}
         #reader img,#reader__scan_region,#reader__dashboard_section,#html5-qrcode-button-camera-permission,#html5-qrcode-button-camera-start,#html5-qrcode-button-camera-stop{display:none!important}
         .bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(0,0,0,.8);padding:10px 15px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-size:.78em}
@@ -31,7 +30,7 @@
         .ctrl-ar{width:auto;padding:0 20px;border-radius:22px;background:linear-gradient(135deg,#00c853,#00e676);color:#000;font-weight:700;font-size:.9em}
         #arMode{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:500}
         #arMode.on{display:flex;flex-direction:column}
-        #arVideo{width:100%!important;height:100%!important;object-fit:cover!important;position:fixed;top:0;left:0;z-index:1}
+        #arV{width:100%!important;height:100%!important;object-fit:cover!important;position:fixed;top:0;left:0;z-index:1}
         #cAR{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2}
         .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(0,0,0,.9);color:#fff;padding:8px 18px;border-radius:20px;font-size:.75em;z-index:200;transition:.3s;pointer-events:none}
         .toast.show{transform:translateX(-50%) translateY(0)}
@@ -43,170 +42,192 @@
 </head>
 <body>
 
-<div id="start"><div style="font-size:55px;margin-bottom:8px">📸</div><h2>3dcam 3D</h2><p style="opacity:.7;margin-bottom:16px;font-size:.85em">QR Code → Modelo 3D Real</p><button class="btn btn-go" onclick="startScan()">📷 INICIAR</button></div>
+<div id="start"><div style="font-size:55px;margin-bottom:8px">📸</div><h2>3dcam 3D Realista</h2><p style="opacity:.7;margin-bottom:16px;font-size:.85em">QR Code → Modelo 3D com Vida</p><button class="btn btn-go" onclick="startScan()">📷 INICIAR</button></div>
 
 <div id="scan"><div class="bar"><span style="display:flex;align-items:center;gap:6px"><div class="dot" id="sd"></div><span id="st">Aponte pro QR Code</span></span><button class="ctrl" onclick="stopScan()" style="position:static;width:auto;height:auto;border-radius:16px;padding:5px 12px;font-size:.7em">✕</button></div><div id="reader"></div></div>
 
-<div id="ar3D"><div class="load show" id="ld"><div class="spin"></div><p id="lt">Gerando malha 3D...</p></div><canvas id="c3d"></canvas><div class="bar"><span style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:#0f8"></div><span>✨ Modelo 3D - Arraste</span></span></div><div class="ctrls"><button class="ctrl" onclick="rst()">🔄</button><button class="ctrl" onclick="tsp()">⏯️</button><button class="ctrl-ar" onclick="arMode()">📱 AR</button><button class="ctrl" onclick="pic()">📸</button><button class="ctrl" onclick="cls()">✕</button></div></div>
+<div id="ar3D"><div class="load show" id="ld"><div class="spin"></div><p id="lt">Criando modelo 3D realista...</p></div><canvas id="c3d"></canvas><div class="bar"><span style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:#0f8"></div><span>🌴 Modelo 3D Animado</span></span></div><div class="ctrls"><button class="ctrl" onclick="rst()">🔄</button><button class="ctrl" onclick="tsp()">⏯️</button><button class="ctrl" onclick="toggleWind()">💨</button><button class="ctrl-ar" onclick="arMode()">📱 AR</button><button class="ctrl" onclick="pic()">📸</button><button class="ctrl" onclick="cls()">✕</button></div></div>
 
-<div id="arMode"><video id="arVideo" autoplay playsinline muted></video><canvas id="cAR"></canvas><div class="bar"><span style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:#0f8;animation:pulse .8s infinite"></div><span>📱 AR - Modelo 3D no ambiente</span></span></div><div class="ctrls"><button class="ctrl" onclick="stopAR()">✕</button><button class="ctrl" onclick="picAR()">📸</button></div></div>
+<div id="arMode"><video id="arV" autoplay playsinline muted></video><canvas id="cAR"></canvas><div class="bar"><span style="display:flex;align-items:center;gap:6px"><div style="width:7px;height:7px;border-radius:50%;background:#0f8;animation:pulse .8s infinite"></div><span>📱 AR - Modelo 3D no Mundo Real</span></span></div><div class="ctrls"><button class="ctrl" onclick="stopAR()">✕</button><button class="ctrl" onclick="picAR()">📸</button></div></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-var scanner,s3,c3,r3,mesh,aid;
-var spin=true,imgUrl=null,arS=null;
-var aS,aC,aR,aM,aA;
+var scanner,s3,c3,r3,mesh,aid,windOn=true,windTime=0,leafParts=[],trunkPart=null;
+var spin=true,imgUrl=null,arS=null,aS2,aC2,aR2,aM2,aA2;
 
 // SCANNER
-function startScan(){
-    document.getElementById('start').style.display='none';
-    document.getElementById('scan').classList.add('on');
-    scanner=new Html5Qrcode("reader");
-    scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:180,height:180},aspectRatio:1.0},
-        function(t){
-            document.getElementById('sd').classList.add('ok');
-            document.getElementById('st').textContent='✅ Lido!';
-            if(navigator.vibrate)navigator.vibrate([50,30,100]);
-            if(scanner){scanner.stop().catch(function(){});scanner=null;}
-            setTimeout(function(){document.getElementById('scan').classList.remove('on');loadImg();},400);
-        },function(){}
-    ).catch(function(){alert('Permita a câmera!');document.getElementById('start').style.display='flex';});
-}
+function startScan(){document.getElementById('start').style.display='none';document.getElementById('scan').classList.add('on');scanner=new Html5Qrcode("reader");scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:180,height:180},aspectRatio:1.0},function(t){document.getElementById('sd').classList.add('ok');document.getElementById('st').textContent='✅ Lido!';if(navigator.vibrate)navigator.vibrate([50,30,100]);if(scanner){scanner.stop().catch(function(){});scanner=null;}setTimeout(function(){document.getElementById('scan').classList.remove('on');loadImg();},400);},function(){}).catch(function(){alert('Permita a câmera!');document.getElementById('start').style.display='flex';});}
 function stopScan(){if(scanner){scanner.stop().catch(function(){});scanner=null;}document.getElementById('scan').classList.remove('on');document.getElementById('start').style.display='flex';}
-
-// CARREGAR
-function loadImg(){
-    document.getElementById('ar3D').classList.add('on');
-    document.getElementById('ld').classList.add('show');
-    document.getElementById('lt').textContent='Analisando imagem...';
-    var img=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');
-    if(img&&img.length>500&&img.startsWith('data:image')){imgUrl=img;init3D(img);return;}
-    var last=localStorage.getItem('lastUploadedImage');
-    if(last){testIt(last);return;}
-    fetch('https://api.github.com/repos/Hacdevcod/3dcam/contents/images')
-    .then(function(r){return r.json();})
-    .then(function(f){
-        if(Array.isArray(f)&&f.length>0){
-            testIt('https://raw.githubusercontent.com/Hacdevcod/3dcam/main/images/'+f[f.length-1].name);
-        }else{init3D(null);}
-    }).catch(function(){init3D(null);});
-}
+function loadImg(){document.getElementById('ar3D').classList.add('on');document.getElementById('ld').classList.add('show');document.getElementById('lt').textContent='Analisando imagem...';var img=localStorage.getItem('currentImage')||localStorage.getItem('finalImage');if(img&&img.length>500&&img.startsWith('data:image')){imgUrl=img;init3D(img);return;}var last=localStorage.getItem('lastUploadedImage');if(last){testIt(last);return;}fetch('https://api.github.com/repos/Hacdevcod/3dcam/contents/images').then(function(r){return r.json();}).then(function(f){if(Array.isArray(f)&&f.length>0)testIt('https://raw.githubusercontent.com/Hacdevcod/3dcam/main/images/'+f[f.length-1].name);else init3D(null);}).catch(function(){init3D(null);});}
 function testIt(u){imgUrl=u;var t=new Image();t.crossOrigin='anonymous';t.onload=function(){init3D(u);};t.onerror=function(){init3D(null);};t.src=u;}
 
-// ==================== MALHA 3D (TIPO IMPRESSORA 3D) ====================
+// ==================== MODELO 3D REALISTA COM ANIMAÇÃO ====================
 function init3D(src){
-    var c=document.getElementById('c3d');
-    var W=window.innerWidth,H=window.innerHeight;
-    c.width=W;c.height=H;
+    var c=document.getElementById('c3d');var W=window.innerWidth,H=window.innerHeight;c.width=W;c.height=H;
+    s3=new THREE.Scene();s3.background=new THREE.Color(0x0a0a14);s3.fog=new THREE.Fog(0x0a0a14,6,18);
+    c3=new THREE.PerspectiveCamera(45,W/H,0.1,100);c3.position.set(0,0,5);
+    r3=new THREE.WebGLRenderer({canvas:c,antialias:true});r3.setSize(W,H);r3.setPixelRatio(Math.min(window.devicePixelRatio,2));r3.shadowMap.enabled=true;
     
-    s3=new THREE.Scene();
-    s3.background=new THREE.Color(0x0a0a14);
-    s3.fog=new THREE.Fog(0x0a0a14,5,15);
-    
-    c3=new THREE.PerspectiveCamera(45,W/H,0.1,100);
-    c3.position.set(0,0.3,5);
-    
-    r3=new THREE.WebGLRenderer({canvas:c,antialias:true});
-    r3.setSize(W,H);r3.setPixelRatio(Math.min(window.devicePixelRatio,2));
-    r3.shadowMap.enabled=true;
-    
-    s3.add(new THREE.AmbientLight(0x404060,0.4));
-    var k=new THREE.DirectionalLight(0xffeedd,1.2);k.position.set(3,5,5);k.castShadow=true;s3.add(k);
-    var f=new THREE.DirectionalLight(0x6c5ce7,0.5);f.position.set(-3,1,2);s3.add(f);
-    var r=new THREE.DirectionalLight(0x00cec9,0.6);r.position.set(0,-1,-2);s3.add(r);
+    // Iluminação dramática
+    s3.add(new THREE.AmbientLight(0x404060,0.5));
+    var sun=new THREE.DirectionalLight(0xffeedd,1.5);sun.position.set(5,8,5);sun.castShadow=true;s3.add(sun);
+    var sky=new THREE.DirectionalLight(0x6c5ce7,0.4);sky.position.set(-3,2,2);s3.add(sky);
+    var rim=new THREE.DirectionalLight(0x00cec9,0.5);rim.position.set(0,-1,-3);s3.add(rim);
     
     // Chão
     var fl=new THREE.Mesh(new THREE.PlaneGeometry(20,20),new THREE.MeshStandardMaterial({color:0x111122,roughness:0.1,metalness:0.8}));
-    fl.rotation.x=-Math.PI/2;fl.position.y=-3;fl.receiveShadow=true;s3.add(fl);
+    fl.rotation.x=-Math.PI/2;fl.position.y=-4;fl.receiveShadow=true;s3.add(fl);
     
     // Partículas
-    var pg=new THREE.BufferGeometry();var pc=500,ps=new Float32Array(pc*3);
-    for(var i=0;i<pc*3;i++)ps[i]=(Math.random()-0.5)*10;
+    var pg=new THREE.BufferGeometry();var pc=400,ps=new Float32Array(pc*3);
+    for(var i=0;i<pc*3;i++)ps[i]=(Math.random()-0.5)*12;
     pg.setAttribute('position',new THREE.BufferAttribute(ps,3));
     s3.add(new THREE.Points(pg,new THREE.PointsMaterial({size:0.03,color:0x6c5ce7,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending})));
     
     var fs=src||createFB();
     var ld=new THREE.TextureLoader();ld.crossOrigin='anonymous';
-    
     ld.load(fs,function(tex){
-        document.getElementById('lt').textContent='Gerando malha 3D (Height Map)...';
-        setTimeout(function(){
-            var meshData=build3DMesh(tex);
-            document.getElementById('ld').classList.remove('show');
-            toast('✨ Malha 3D pronta!');
-        },300);
+        document.getElementById('lt').textContent='Criando estrutura 3D...';
+        buildRealisticModel(tex);
+        document.getElementById('ld').classList.remove('show');
+        toast('🌴 Modelo 3D com vida!');
     },undefined,function(){initFB();});
     
     setupTouch3D(c);
     anim3D();
 }
 
-function build3DMesh(tex){
+function buildRealisticModel(tex){
     var img=tex.image;
-    var c=document.createElement('canvas');
-    c.width=img.width;c.height=img.height;
-    var ctx=c.getContext('2d');
-    ctx.drawImage(img,0,0);
+    var c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
     var data=ctx.getImageData(0,0,c.width,c.height).data;
     
-    // Resolução da malha (como slicer de impressora 3D)
-    var resX=80,resY=80;
     var aspect=img.width/img.height;
     var w=aspect*3,h=3;
+    var resX=80,resY=80;
     
-    // Criar geometria com height map
-    var geo=new THREE.PlaneGeometry(w,h,resX-1,resY-1);
-    var pos=geo.attributes.position;
-    
-    // Aplicar height map (Z = altura baseada na luminância)
-    for(var i=0;i<pos.count;i++){
-        var x=pos.getX(i)/w+0.5;
-        var y=pos.getY(i)/h+0.5;
-        var sx=Math.floor(x*img.width);
-        var sy=Math.floor(y*img.height);
-        var idx=(Math.min(sy,img.height-1)*img.width+Math.min(sx,img.width-1))*4;
-        var r2=data[idx],g2=data[idx+1],b2=data[idx+2];
-        var lum=(0.299*r2+0.587*g2+0.114*b2)/255;
-        
-        // Altura: partes claras = mais alto (como impressora 3D)
-        var height=lum*0.6;
-        pos.setZ(i,height);
-    }
-    geo.computeVertexNormals();
-    geo.attributes.position.needsUpdate=true;
-    
-    // Material com a textura
-    var mat=new THREE.MeshStandardMaterial({
-        map:tex,
-        roughness:0.35,
-        metalness:0.05,
-        side:THREE.DoubleSide,
-        flatShading:false
-    });
-    
+    // Limpar partes antigas
+    leafParts=[];
     if(mesh)s3.remove(mesh);
-    mesh=new THREE.Mesh(geo,mat);
-    mesh.castShadow=true;mesh.receiveShadow=true;
+    
+    // Grupo principal
+    mesh=new THREE.Group();
     s3.add(mesh);
     
-    // Wireframe opcional (mostra a malha como impressora 3D)
-    var wire=new THREE.LineSegments(
-        new THREE.WireframeGeometry(geo),
-        new THREE.LineBasicMaterial({color:0x6c5ce7,transparent:true,opacity:0.15})
-    );
-    mesh.add(wire);
+    // ============ TRONCO (CILINDRO COM RELEVO) ============
+    var trunkGeo=new THREE.CylinderGeometry(0.15,0.2,h*0.6,32,16);
+    var trunkPos=trunkGeo.attributes.position;
+    for(var i=0;i<trunkPos.count;i++){
+        var y=trunkPos.getY(i);
+        var noise=Math.sin(y*8)*0.03+Math.cos(y*5)*0.02;
+        trunkPos.setX(i,trunkPos.getX(i)+noise);
+        trunkPos.setZ(i,trunkPos.getZ(i)+noise*0.7);
+    }
+    trunkGeo.computeVertexNormals();
+    var trunkMat=new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.7,metalness:0.1});
+    trunkPart=new THREE.Mesh(trunkGeo,trunkMat);
+    trunkPart.position.y=-h*0.25;
+    trunkPart.castShadow=true;
+    mesh.add(trunkPart);
     
-    // Moldura 3D
-    var fg=new THREE.BoxGeometry(w+0.15,h+0.15,0.08);
-    var fm=new THREE.MeshStandardMaterial({color:0x6c5ce7,roughness:0.2,metalness:0.9,emissive:0x1a1a3e,emissiveIntensity:0.5});
-    var frame=new THREE.Mesh(fg,fm);
-    frame.position.z=-0.05;
-    mesh.add(frame);
+    // Textura da foto no tronco (se for palmeira)
+    var trunkTex=tex;
+    
+    // ============ FOLHAS (MÚLTIPLAS CAMADAS ANIMADAS) ============
+    var leafCount=8;
+    for(var l=0;l<leafCount;l++){
+        var angle=(l/leafCount)*Math.PI*2;
+        var leafGeo=new THREE.PlaneGeometry(w*0.6,h*0.35,20,12);
+        var leafPos=leafGeo.attributes.position;
+        
+        // Deformar a folha (curvatura)
+        for(var j=0;j<leafPos.count;j++){
+            var ly=leafPos.getY(j);
+            var lx=leafPos.getX(j);
+            leafPos.setZ(j,Math.sin(lx*2)*0.1+ly*0.15);
+            leafPos.setY(j,ly+0.1);
+        }
+        leafGeo.computeVertexNormals();
+        
+        var leafMat=new THREE.MeshStandardMaterial({
+            map:tex,
+            roughness:0.4,
+            metalness:0.05,
+            side:THREE.DoubleSide,
+            transparent:true,
+            opacity:0.9
+        });
+        
+        var leaf=new THREE.Mesh(leafGeo,leafMat);
+        leaf.position.y=h*0.25;
+        leaf.rotation.z=angle;
+        leaf.rotation.x=-0.5;
+        leaf.castShadow=true;
+        leaf.userData={baseAngle:angle,baseX:-0.5,speed:0.5+Math.random()*0.5,amplitude:0.05+Math.random()*0.1};
+        leafParts.push(leaf);
+        mesh.add(leaf);
+        
+        // Folhas menores (camada 2)
+        var leaf2=new THREE.Mesh(
+            new THREE.PlaneGeometry(w*0.4,h*0.25,16,10),
+            new THREE.MeshStandardMaterial({map:tex,roughness:0.35,metalness:0.05,side:THREE.DoubleSide,transparent:true,opacity:0.85})
+        );
+        leaf2.position.y=h*0.35;
+        leaf2.rotation.z=angle+0.3;
+        leaf2.rotation.x=-0.7;
+        leaf2.userData={baseAngle:angle+0.3,baseX:-0.7,speed:0.7+Math.random()*0.6,amplitude:0.08+Math.random()*0.15};
+        leafParts.push(leaf2);
+        mesh.add(leaf2);
+    }
+    
+    // ============ CENTRO DA IMAGEM (PLANO COM RELEVO) ============
+    var mainGeo=new THREE.PlaneGeometry(w*0.5,h*0.3,40,40);
+    var mainPos=mainGeo.attributes.position;
+    for(var i2=0;i2<mainPos.count;i2++){
+        var mx=mainPos.getX(i2)/(w*0.25)+0.5;
+        var my=mainPos.getY(i2)/(h*0.15)+0.5;
+        var sx=Math.floor(mx*img.width);var sy=Math.floor(my*img.height);
+        var idx=(Math.min(sy,img.height-1)*img.width+Math.min(sx,img.width-1))*4;
+        var lum=(0.299*data[idx]+0.587*data[idx+1]+0.114*data[idx+2])/255;
+        mainPos.setZ(i2,lum*0.15);
+    }
+    mainGeo.computeVertexNormals();
+    var mainPlane=new THREE.Mesh(mainGeo,new THREE.MeshStandardMaterial({map:tex,roughness:0.35,metalness:0.05,side:THREE.DoubleSide}));
+    mainPlane.position.y=h*0.05;
+    mainPlane.castShadow=true;
+    mesh.add(mainPlane);
+    
+    // Moldura
+    var frame=new THREE.Mesh(new THREE.BoxGeometry(w+0.2,h+0.2,0.06),new THREE.MeshStandardMaterial({color:0x6c5ce7,roughness:0.2,metalness:0.9,emissive:0x1a1a3e,emissiveIntensity:0.5}));
+    frame.position.z=-0.05;mesh.add(frame);
 }
 
 function createFB(){var c=document.createElement('canvas');c.width=600;c.height=400;var ctx=c.getContext('2d');var g=ctx.createLinearGradient(0,0,600,400);g.addColorStop(0,'#6c5ce7');g.addColorStop(1,'#00cec9');ctx.fillStyle=g;ctx.fillRect(0,0,600,400);ctx.fillStyle='white';ctx.font='bold 28px Arial';ctx.textAlign='center';ctx.fillText('3dcam',300,170);return c.toDataURL('image/png');}
 function initFB(){var g=new THREE.PlaneGeometry(3,2);mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x6c5ce7}));s3.add(mesh);document.getElementById('ld').classList.remove('show');}
+
+// ==================== ANIMAÇÃO DE VENTO (SHAKER) ====================
+function applyWind(deltaTime){
+    if(!windOn||leafParts.length===0)return;
+    windTime+=deltaTime*0.001;
+    
+    for(var i=0;i<leafParts.length;i++){
+        var leaf=leafParts[i];
+        var ud=leaf.userData;
+        // Movimento de onda (vento)
+        var wave=Math.sin(windTime*ud.speed+i)*ud.amplitude;
+        leaf.rotation.x=ud.baseX+wave;
+        leaf.rotation.z=ud.baseAngle+Math.cos(windTime*ud.speed*0.7+i)*ud.amplitude*0.5;
+        leaf.position.x+=Math.sin(windTime+i)*0.002;
+    }
+    
+    // Tronco balança suavemente
+    if(trunkPart){
+        trunkPart.rotation.z=Math.sin(windTime*0.3)*0.03;
+        trunkPart.rotation.x=Math.cos(windTime*0.25)*0.02;
+    }
+}
 
 function setupTouch3D(c){
     var d=false,px=0,py=0,ld2=0;
@@ -218,42 +239,36 @@ function setupTouch3D(c){
     c.addEventListener('mouseup',function(){d=false;});
 }
 
-function anim3D(){
+var lastTime=0;
+function anim3D(time){
     aid=requestAnimationFrame(anim3D);
-    if(mesh&&spin){mesh.rotation.y+=0.004;mesh.position.y=Math.sin(Date.now()*0.0008)*0.1;}
+    var dt=time-lastTime;lastTime=time;
+    applyWind(dt);
+    if(mesh&&spin)mesh.rotation.y+=0.003;
+    if(mesh&&spin)mesh.position.y=Math.sin(time*0.0005)*0.1;
     if(r3&&s3&&c3)r3.render(s3,c3);
 }
 
 // AR MODE
 async function arMode(){
-    document.getElementById('ar3D').classList.remove('on');
-    if(aid)cancelAnimationFrame(aid);
+    document.getElementById('ar3D').classList.remove('on');if(aid)cancelAnimationFrame(aid);
     document.getElementById('arMode').classList.add('on');
-    var v=document.getElementById('arVideo');
-    var ca=document.getElementById('cAR');
-    ca.width=window.innerWidth;ca.height=window.innerHeight;
-    try{
-        arS=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
-        v.srcObject=arS;v.play();
-        aS=new THREE.Scene();
-        aC=new THREE.PerspectiveCamera(50,ca.width/ca.height,0.1,100);
-        aC.position.set(0,0.2,4);
-        aR=new THREE.WebGLRenderer({canvas:ca,alpha:true,antialias:true});
-        aR.setSize(ca.width,ca.height);
-        aS.add(new THREE.AmbientLight(0xffffff,0.9));
-        var l=new THREE.DirectionalLight(0xffffff,1);l.position.set(2,3,3);aS.add(l);
-        if(mesh){aM=mesh.clone();aM.material=mesh.material.clone();aM.position.set(0,0,0);aM.scale.set(1.6,1.6,1.6);aS.add(aM);}
-        (function arAnim(){if(!arS)return;aA=requestAnimationFrame(arAnim);if(aM){aM.rotation.y+=0.008;aM.position.y=Math.sin(Date.now()*0.001)*0.1;}if(aR&&aS&&aC)aR.render(aS,aC);})();
-        toast('📱 AR 3D Real!');
-    }catch(e){alert('Erro câmera: '+e.message);document.getElementById('arMode').classList.remove('on');document.getElementById('ar3D').classList.add('on');anim3D();}
+    var v=document.getElementById('arV');var ca=document.getElementById('cAR');ca.width=window.innerWidth;ca.height=window.innerHeight;
+    try{arS=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});v.srcObject=arS;v.play();
+        aS2=new THREE.Scene();aC2=new THREE.PerspectiveCamera(50,ca.width/ca.height,0.1,100);aC2.position.set(0,0.1,3.5);
+        aR2=new THREE.WebGLRenderer({canvas:ca,alpha:true,antialias:true});aR2.setSize(ca.width,ca.height);
+        aS2.add(new THREE.AmbientLight(0xffffff,1));var l=new THREE.DirectionalLight(0xffffff,1.2);l.position.set(2,4,3);aS2.add(l);
+        if(mesh){aM2=mesh.clone(true);aM2.position.set(0,0,0);aM2.scale.set(1.8,1.8,1.8);aS2.add(aM2);}
+        (function arAnim(t){if(!arS)return;aA2=requestAnimationFrame(arAnim);applyWind(t-(lastTime||t));if(aM2){aM2.rotation.y+=0.006;aM2.position.y=Math.sin(t*0.0006)*0.1;}if(aR2&&aS2&&aC2)aR2.render(aS2,aC2);})();
+        toast('📱 AR Realista!');}catch(e){alert('Erro: '+e.message);document.getElementById('arMode').classList.remove('on');document.getElementById('ar3D').classList.add('on');anim3D(0);}
 }
-function stopAR(){if(arS){arS.getTracks().forEach(function(t){t.stop();});arS=null;}if(aA)cancelAnimationFrame(aA);if(aR)aR.dispose();aS=null;aM=null;document.getElementById('arMode').classList.remove('on');document.getElementById('ar3D').classList.add('on');anim3D();toast('Voltando 3D');}
-function picAR(){var v=document.getElementById('arVideo');var ca=document.getElementById('cAR');var c2=document.createElement('canvas');c2.width=window.innerWidth;c2.height=window.innerHeight;var ctx=c2.getContext('2d');ctx.drawImage(v,0,0,c2.width,c2.height);ctx.drawImage(ca,0,0);var a=document.createElement('a');a.download='3dcam-ar-'+Date.now()+'.png';a.href=c2.toDataURL('image/png');a.click();toast('📸 Foto AR!');}
+function stopAR(){if(arS){arS.getTracks().forEach(function(t){t.stop();});arS=null;}if(aA2)cancelAnimationFrame(aA2);if(aR2)aR2.dispose();aS2=null;aM2=null;document.getElementById('arMode').classList.remove('on');document.getElementById('ar3D').classList.add('on');anim3D(0);toast('Voltando');}
+function picAR(){var v=document.getElementById('arV');var ca=document.getElementById('cAR');var c2=document.createElement('canvas');c2.width=window.innerWidth;c2.height=window.innerHeight;var ctx=c2.getContext('2d');ctx.drawImage(v,0,0,c2.width,c2.height);ctx.drawImage(ca,0,0);var a=document.createElement('a');a.download='3dcam-ar-'+Date.now()+'.png';a.href=c2.toDataURL('image/png');a.click();toast('📸 AR!');}
 
-// CONTROLES
-function rst(){if(mesh)mesh.rotation.set(0,0,0);c3.position.set(0,0.3,5);toast('🔄 Reset');}
-function tsp(){spin=!spin;toast(spin?'▶️ Girando':'⏸️ Pausado');}
-function pic(){if(!r3)return;r3.render(s3,c3);var a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=r3.domElement.toDataURL('image/png');a.click();toast('📸 Foto!');}
+function rst(){if(mesh)mesh.rotation.set(0,0,0);c3.position.set(0,0,5);toast('🔄');}
+function tsp(){spin=!spin;toast(spin?'▶️':'⏸️');}
+function toggleWind(){windOn=!windOn;toast(windOn?'💨 Vento ON':'💨 Vento OFF');}
+function pic(){if(!r3)return;r3.render(s3,c3);var a=document.createElement('a');a.download='3dcam-'+Date.now()+'.png';a.href=r3.domElement.toDataURL('image/png');a.click();toast('📸');}
 function cls(){if(aid)cancelAnimationFrame(aid);if(r3)r3.dispose();s3=null;mesh=null;r3=null;document.getElementById('ar3D').classList.remove('on');document.getElementById('start').style.display='flex';spin=true;}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
 window.addEventListener('resize',function(){if(r3&&c3){var W=window.innerWidth,H=window.innerHeight;c3.aspect=W/H;c3.updateProjectionMatrix();r3.setSize(W,H);}});
